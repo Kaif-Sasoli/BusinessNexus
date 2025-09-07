@@ -4,8 +4,11 @@ import { TeamMember,
          Startup,
          UserInfo,
          EntrepreneurCardData,
-         StartupAndUserResponse
+         StartupAndUserResponse,
+         EntrepreneurDashboardResponse
 } from "../types/index";
+
+
 
 //  Get startup profile + user details by entrepreneur userId
 
@@ -84,5 +87,11 @@ export const searchEntrepreneursAPI = async (params: {
     return { success: false, results: [] };
   }
 };
+
+ export const getEntrepreneurDashboard = async (): Promise<EntrepreneurDashboardResponse> => {
+  const { data } = await apiClient.get<EntrepreneurDashboardResponse>("/entrepreneur");
+  return data;
+};
+
 
 

@@ -37,7 +37,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResp
             );
           
             const newAccessToken = res.data.accessToken;
-            localStorage.setItem("accessToken", newAccessToken);
+            localStorage.setItem(import.meta.env.VITE_ACCESS_KEY, newAccessToken);
           
             if (originalRequest.headers) {
               originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
@@ -45,7 +45,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResp
           
             return apiClient(originalRequest);
           } catch (refreshError) {
-            localStorage.removeItem("accessToken");
+            localStorage.removeItem(import.meta.env.VITE_ACCESS_KEY);
             window.location.href = "/signin";
             return Promise.reject(refreshError);
           }

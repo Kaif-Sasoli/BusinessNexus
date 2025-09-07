@@ -7,20 +7,38 @@ import { Badge } from '../../components/ui/Badge';
 import { CollaborationRequestCard } from '../../components/collaboration/CollaborationRequestCard';
 import { InvestorCard } from '../../components/investor/InvestorCard';
 import { useAuth } from '../../context/AuthContext';
-import { CollaborationRequest } from '../../types';
+import { CollaborationRequest, EntrepreneurDashboardResponse } from '../../types';
 import { getRequestsForEntrepreneur } from '../../data/collaborationRequests';
-import { investors } from '../../data/users';
-import { Entrepreneur } from '../../types';
 import { getRecommendedInvestors, Investor } from '../../api/investor';
 import { getEntrepreneurRequests } from '../../api/request'
+import { getEntrepreneurDashboard } from '../../api/entrepreneur'
 
 export const EntrepreneurDashboard: React.FC = () => {
   const { user } = useAuth();
   const [collaborationRequests, setCollaborationRequests] = useState<CollaborationRequest[]>([]);
+  const [dashboardData, setDashboardData] = useState<EntrepreneurDashboardResponse["data"] | null>(null);
   const [recommendedInvestors, setRecommendedInvestors] = useState<Investor[]>([]);
   const [isloading, setIsLoading] = useState(true);
+
+  const upcomingMeetingsCount = dashboardData?.meetings
+  ? dashboardData.meetings.filter(meeting => meeting.status === "scheduled").length
+  : 0;
   
-  
+  useEffect(() => {
+  const fetchDashboard = async () => {
+    try {
+      const res = await getEntrepreneurDashboard();
+      if (res.success) {
+        setDashboardData(res.data);
+      }
+    } catch (error) {
+      console.error("Error loading entrepreneur dashboard:", error);
+    }
+  };
+  fetchDashboard();
+}, []);
+
+
   useEffect(() => {
     if (user) {
       // Load collaboration requests
@@ -137,7 +155,7 @@ export const EntrepreneurDashboard: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-secondary-700">Total Connections</p>
                 <h3 className="text-xl font-semibold text-secondary-900">
-                  {collaborationRequests.filter(req => req.status === 'accepted').length}
+                  {dashboardData?.collaborations.filter(req => req.status === 'accepted').length}
                 </h3>
               </div>
             </div>
@@ -152,7 +170,7 @@ export const EntrepreneurDashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-accent-700">Upcoming Meetings</p>
-                <h3 className="text-xl font-semibold text-accent-900">2</h3>
+                <h3 className="text-xl font-semibold text-accent-900">{upcomingMeetingsCount}</h3>
               </div>
             </div>
           </CardBody>

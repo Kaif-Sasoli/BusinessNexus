@@ -5,7 +5,8 @@ import { toast } from "react-hot-toast";
 import { UserRole } from "../types"; 
 import { apiClient, publicApi } from '../api/index'
 
-  const USER_STORAGE_KEY = "business_nexus_user"; 
+  const USER_STORAGE_KEY = import.meta.env.VITE_USER_STORAGE_KEY; 
+  const ACCESS_KEY = import.meta.env.VITE_ACCESS_KEY
 
   interface AuthContextType {
     user: any | null;
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Load from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    const storedToken = localStorage.getItem("business_nexus_token");
+    const storedToken = localStorage.getItem(ACCESS_KEY);
 
     if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser));
@@ -55,10 +56,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // ✅ Auto-sync token too
   useEffect(() => {
     if (accessToken) {
-      localStorage.setItem("business_nexus_token", accessToken);
+      localStorage.setItem(ACCESS_KEY, accessToken);
       apiClient.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
     } else {
-      localStorage.removeItem("business_nexus_token");
+      localStorage.removeItem(ACCESS_KEY);
       delete apiClient.defaults.headers.common["Authorization"];
     }
   }, [accessToken]);

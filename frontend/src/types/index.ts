@@ -98,6 +98,19 @@ export interface Investor extends User {
   maximumInvestment: number;
 }
 
+export interface InvestorDashboardResponse {
+  success: boolean;
+  data: {
+    collaborationsCount: number;
+    dealsCount: number;
+    totalInvestments: number;
+    totalStartups: number;
+    collaborations: any[];
+    deals: any[];
+  };
+}
+
+
 /* ----------------------------- INVESTOR RESPONSES ----------------------------- */
 export interface GetInvestorProfileResponse {
   success: boolean;
@@ -177,6 +190,22 @@ export interface EntrepreneurCardData {
   fundingNeeded: number;
   totalFunds: number;
   teamSize: number;
+}
+
+export interface EntrepreneurDashboardResponse {
+  success: boolean;
+  data: {
+    totalConnections: number;
+    pendingRequests: number;
+    upcomingMeetings: number;
+    profileViews: number;
+    startup?: {
+      id: string;
+      name: string;
+      stage: string;
+      industry: string;
+    } | null;
+  };
 }
 
 export interface StartupAndUserResponse {

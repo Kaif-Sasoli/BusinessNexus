@@ -14,10 +14,9 @@ import toast from "react-hot-toast";
 export const InvestPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user } = useAuth();
-  console.log("User id in InvestPage: " ,userId)
   const [startup, setStartup] = useState<Startup | null>(null);
   const [loading, setLoading] = useState(true);
-  // console.log("startups", startup)
+  
   // form state
   const [amount, setAmount] = useState<number>(0);
   const [equity, setEquity] = useState<number>(0);

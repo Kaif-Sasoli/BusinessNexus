@@ -92,7 +92,7 @@ export const EntrepreneurProfile: React.FC = () => {
     return <div className="p-6 text-center">Loading...</div>;
   }
 
-  if (!startup) {
+  if (!startup && user?.role === 'entrepreneur') {
     return (
       <div className="w-full h-[calc(100vh-100px)] flex flex-col items-center justify-center text-center px-4">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900">

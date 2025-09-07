@@ -7,10 +7,10 @@ import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { EntrepreneurCard } from '../../components/entrepreneur/EntrepreneurCard';
 import { useAuth } from '../../context/AuthContext';
-import { Entrepreneur } from '../../types';
+import { Entrepreneur, EntrepreneurCardData } from '../../types';
 import { entrepreneurs } from '../../data/users';
 import { getRequestsFromInvestor } from '../../data/collaborationRequests';
-import { getAllEntrepreneurs, EntrepreneurCardData } from "../../api/entrepreneur";
+import { getAllEntrepreneurs,  } from "../../api/entrepreneur";
 import { getInvestorDashboard, InvestorDashboardResponse  } from '../../api/investor';
 
 export const InvestorDashboard: React.FC = () => {
@@ -43,7 +43,6 @@ export const InvestorDashboard: React.FC = () => {
       try {
         const res = await getInvestorDashboard();
         if (res.success) {
-          console.log("Investor Dashboard: ",res.data)
           setDashboard(res.data);
         }
       } catch (err) {

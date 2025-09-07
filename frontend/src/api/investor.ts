@@ -4,6 +4,9 @@ import { InvestorUser,
          UpdateInvestorProfileResponse,
          GetRecommendedInvestorsResponse,
          SearchInvestorsResponse,
+         InvestorDashboardResponse,
+
+         
  } from '../types/index'
 
   export interface Investor {
@@ -20,18 +23,6 @@ import { InvestorUser,
   }
 
   
-export interface InvestorDashboardResponse {
-  success: boolean;
-  data: {
-    collaborationsCount: number;
-    dealsCount: number;
-    totalInvestments: number;
-    totalStartups: number;
-    collaborations: any[];
-    deals: any[];
-  };
-}
-
   /* ----------------------------- INVESTOR API ----------------------------- */
   // Fetch logged-in investor’s profile
   export const getInvestorProfile = async (

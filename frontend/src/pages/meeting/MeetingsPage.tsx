@@ -31,17 +31,26 @@ import {
   Meeting,
 } from "../../api/meetings";
 import { getEntrepreneurCollaborators } from "../../api/request";
+import { startMeetingAPI } from "../../api/meetings";
 import { useAuth } from "../../context/AuthContext";
 import  { MeetingsCalendar }  from "../../components/calender/MeetingsCalendar";
+import { RoomCallModal } from '../../components/call/RoomCall'
+
+
 import toast from "react-hot-toast";
+import { useSocket } from "../../context/SocketContext";
+
 
 export const MeetingsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useAuth(); 
+  const { socket, isConnected } = useSocket();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(false);
   const [showNewMeeting, setShowNewMeeting] = useState(false);
   const [filter, setFilter] = useState<"all" | "upcoming" | "past">("all");
   const [collaborators, setCollaborators] = useState<any[]>([]);
+  const [isRoomOpen, setIsRoomOpen] = useState(false);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -155,28 +164,74 @@ export const MeetingsPage: React.FC = () => {
     }
   };
 
-  // Reject Meeting
-  const handleReject = async (meetingId: string) => {
-    try {
-      await rejectMeetingAPI(meetingId);
-      setMeetings((prev) =>
-        prev.map((m) =>
-          m.id === meetingId
-            ? {
-                ...m,
-                participants: m.participants.map((p) =>
-                  p.id === user.id ? { ...p, status: "rejected" } : p
-                ),
-              }
-            : m
-        )
-      );
-      toast.success("Meeting rejected");
-    } catch (error) {
-      console.error("Error rejecting meeting:", error);
-      toast.error("Failed to reject meeting");
-    }
-  };
+      // Reject Meeting
+      const handleReject = async (meetingId: string) => {
+        try {
+          await rejectMeetingAPI(meetingId);
+          setMeetings((prev) =>
+            prev.map((m) =>
+              m.id === meetingId
+                ? {
+                    ...m,
+                    participants: m.participants.map((p) =>
+                      p.id === user.id ? { ...p, status: "rejected" } : p
+                    ),
+                  }
+                : m
+            )
+          );
+          toast.success("Meeting rejected");
+        } catch (error) {
+          console.error("Error rejecting meeting:", error);
+          toast.error("Failed to reject meeting");
+        }
+      };
+    
+  
+        useEffect(() => {
+        if (!socket) return;
+        
+        const handleMeetingStarted = (data: any) => {
+          setMeetings((prev) =>
+            prev.map((m) =>
+              m.id === data.meetingId
+                ? { ...m, status: "live", roomId: data.roomId, roomUrl: data.roomUrl }
+                : m
+            )
+          );
+          toast.success("Meeting is live! You can now join.");
+        };
+      
+        socket.on("meeting:started", handleMeetingStarted);
+      
+        return () => {
+          socket.off("meeting:started", handleMeetingStarted);
+        };
+      }, [socket]);
+    
+  // Start Meeting
+const handleStartMeeting = async (meetingId: string) => {
+  try {
+    const res = await startMeetingAPI(meetingId);
+
+    setMeetings((prev) =>
+      prev.map((m) =>
+        m.id === meetingId
+          ? { ...m, status: "live", roomId: res.meeting.roomId, roomUrl: res.meeting.roomUrl }
+          : m
+      )
+    );
+
+    toast.success("Meeting started");
+
+    setActiveRoomId(res.meeting.roomId);
+    setIsRoomOpen(true);
+  } catch (error) {
+    console.error("Error starting meeting:", error);
+    toast.error("Failed to start meeting");
+  }
+};
+
 
   // when a calendar event is selected (optional)
   const handleSelectCalendarEvent = (meeting: Meeting) => {
@@ -186,6 +241,17 @@ export const MeetingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {activeRoomId && (
+      <RoomCallModal
+        isOpen={isRoomOpen}
+        onClose={() => {
+          setIsRoomOpen(false);
+          setActiveRoomId(null);
+        }}
+        roomId={activeRoomId}
+        meetingId={meetings.find((m) => m.roomId === activeRoomId)?.id || ""}
+      />
+    )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -294,43 +360,68 @@ export const MeetingsPage: React.FC = () => {
                   </div>
                 </CardBody>
                 <CardFooter className="bg-gray-50 border-t flex justify-end gap-2">
-                  {user.role === "entrepreneur" ? (
-                <>
-                  <Button variant="outline" size="sm">
-                    Reschedule
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleCancel(meeting.id)}
-                  >
-                    Cancel
-                  </Button>
-                </>
-                  ) : (
-                    <>
-                      {meeting.participants.find((p) => p.id === user.id)?.status ===
-                        "pending" && (
-                        <>
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => handleAccept(meeting.id)}
-                          >
-                            Accept
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleReject(meeting.id)}
-                          >
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                    </>
-                  )}
-                </CardFooter>
+                {user.role === "entrepreneur" ? (
+                  <>
+                    {meeting.status === "scheduled" && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleStartMeeting(meeting.id)}
+                    >
+                      Start Meeting
+                    </Button>
+                    )}
+                    <Button variant="outline" size="sm">
+                      Reschedule
+                    </Button>
+                    <Button
+                      variant="error"
+                      size="sm"
+                      onClick={() => handleCancel(meeting.id)}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {meeting.status === "live" ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                       onClick={() => {
+                          if (!meeting?.roomId) {
+                            toast.error("Meeting room not ready yet");
+                            return;
+                          }
+                          toast.success("Joining meeting...");
+                          setActiveRoomId(meeting.roomId);
+                          setIsRoomOpen(true);
+                        }}
+                         >
+                        Join Meeting
+                      </Button>
+                    ) : meeting.participants.find((p) => p.id === user.id)?.status ===
+                      "pending" ? (
+                      <>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleAccept(meeting.id)}
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          variant="error"
+                          size="sm"
+                          onClick={() => handleReject(meeting.id)}
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    ) : null}
+                  </>
+                )}
+              </CardFooter>
               </Card>
             ))
           )}

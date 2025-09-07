@@ -13,14 +13,18 @@ export interface Meeting {
   description?: string;
   startTime: string;
   endTime: string;
-  status: "pending" | "accepted" | "rejected" | "cancelled";
+  status: "scheduled" | "live" | "completed" | "cancelled";
+  roomId?: string | null;
+  roomUrl?: string | null;
   organizer: {
     id: string;
     name: string;
     avatar?: string;
+    email?: string;
   };
   participants: Participant[];
 }
+
 
 // Fetch all meetings for the user
 export const getMeetings = async (): Promise<Meeting[]> => {
@@ -47,6 +51,7 @@ export const createMeeting = async (meetingData: {
 // Invertor Accept the meeting
 export const acceptMeetingAPI = async (meetingId: string): Promise<{ message: string }> => {
   const res = await apiClient.put<{ message: string }>(`/meetings/accept/${meetingId}`);
+  console.log("Why reject: ", res)
   return res.data;
 };
 
@@ -61,5 +66,23 @@ export const rejectMeetingAPI = async (meetingId: string): Promise<{ message: st
 // Organizer Cancel Meeting
 export const cancelMeetingAPI = async (meetingId: string): Promise<{ message: string }> => {
   const res = await apiClient.put<{ message: string }>(`/meetings/cancel/${meetingId}`);
+  return res.data;
+};
+
+
+// Organizer Start Meeting
+export const startMeetingAPI = async (meetingId: string): Promise<{ message: string }> => {
+  const res = await apiClient.put<{ message: string }>(`/meetings/start/${meetingId}`);
+  return res.data;
+};
+
+
+// Organizer or system marks meeting completed
+export const endMeetingAPI = async (
+  meetingId: string
+): Promise<{ message: string; meeting: Meeting }> => {
+  const res = await apiClient.put<{ message: string; meeting: Meeting }>(
+    `/meetings/end/${meetingId}`
+  );
   return res.data;
 };
